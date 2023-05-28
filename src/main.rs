@@ -1,12 +1,20 @@
 mod config;
 mod handlers;
+mod jwt;
 
 use axum::Router;
 use config::Config;
-use sqlx::postgres::PgPoolOptions;
+use jwt::Jwt;
+use sqlx::{postgres::PgPoolOptions, PgPool};
+use std::sync::Arc;
 use tower_http::trace::TraceLayer;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+pub struct AppState {
+    jwt: Jwt,
+    pool: PgPool,
+}
 
 #[tokio::main]
 async fn main() {
@@ -26,8 +34,12 @@ async fn main() {
         .await
         .expect("Failed to connect to database");
 
+    let jwt = Jwt::new(config.jwt);
+
+    let state = Arc::new(AppState { jwt, pool });
+
     let app = Router::new()
-        .merge(handlers::router(pool))
+        .merge(handlers::router(state))
         .layer(TraceLayer::new_for_http());
 
     info!("Server listening on {}", config.addr);

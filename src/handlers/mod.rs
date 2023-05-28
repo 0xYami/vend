@@ -1,10 +1,14 @@
 mod health;
+mod users;
 
+use crate::AppState;
 use axum::{routing::MethodRouter, Router};
-use sqlx::PgPool;
+use std::sync::Arc;
 
-pub fn router(pool: PgPool) -> Router {
-    Router::new().merge(health::router())
+pub fn router(pool: Arc<AppState>) -> Router {
+    Router::new()
+        .merge(health::router())
+        .merge(users::router(pool))
 }
 
 fn route(path: &str, method: MethodRouter<()>) -> Router {
