@@ -10,11 +10,31 @@ pub struct DBConfig {
     pub max_connections: u32,
 }
 
+impl DBConfig {
+    pub fn try_from_env() -> Result<Self> {
+        dotenv()?;
+        Ok(Self {
+            url: env::var("DATABASE_URL")?,
+            max_connections: env::var("MAX_CONNECTIONS")?.parse::<u32>()?,
+        })
+    }
+}
+
 pub struct JwtConfig {
     /// secret key
     pub secret: String,
     /// expiration in hours
     pub expiration: usize,
+}
+
+impl JwtConfig {
+    fn try_from_env() -> Result<Self> {
+        dotenv()?;
+        Ok(Self {
+            secret: env::var("JWT_SECRET")?,
+            expiration: env::var("JWT_EXPIRATION")?.parse::<usize>()?,
+        })
+    }
 }
 
 pub struct Config {
@@ -29,24 +49,11 @@ impl Config {
 
         let port = env::var("PORT")?.parse::<u16>().unwrap();
         let host = env::var("HOST")?.parse::<IpAddr>().unwrap();
-        let database_url = env::var("DATABASE_URL")?;
-        let max_connections = env::var("MAX_CONNECTIONS")?.parse::<u32>().unwrap();
-        let jwt_secret = env::var("JWT_SECRET").unwrap();
-        let jwt_expiration = env::var("JWT_EXPIRATION")
-            .unwrap()
-            .parse::<usize>()
-            .unwrap();
 
         Ok(Self {
             addr: SocketAddr::from((host, port)),
-            db: DBConfig {
-                url: database_url,
-                max_connections,
-            },
-            jwt: JwtConfig {
-                secret: jwt_secret,
-                expiration: jwt_expiration,
-            },
+            db: DBConfig::try_from_env().unwrap(),
+            jwt: JwtConfig::try_from_env().unwrap(),
         })
     }
 }
