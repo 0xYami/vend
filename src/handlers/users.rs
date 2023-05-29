@@ -11,10 +11,10 @@ use sqlx::FromRow;
 use std::sync::Arc;
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
-struct User {
-    id: i32,
-    name: String,
-    jwt: String,
+pub struct User {
+    pub id: i32,
+    pub name: String,
+    pub jwt: String,
 }
 
 #[derive(Serialize, Deserialize)]
