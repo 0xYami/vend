@@ -16,7 +16,7 @@ impl DBConfig {
         dotenv()?;
         Ok(Self {
             url: env::var("DATABASE_URL")?,
-            max_connections: env::var("MAX_CONNECTIONS")?.parse::<u32>()?,
+            max_connections: env::var("DATABASE_MAX_CONNECTIONS")?.parse::<u32>()?,
         })
     }
 }
