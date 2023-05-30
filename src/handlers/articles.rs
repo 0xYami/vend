@@ -1,5 +1,4 @@
-use crate::handlers::User;
-use crate::AppState;
+use crate::{entities::NewArticle, AppState};
 use axum::{
     extract::{Path, State},
     headers::{authorization::Bearer, Authorization},
@@ -13,11 +12,11 @@ use sqlx::FromRow;
 use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, FromRow)]
-struct Article {
+pub struct Article {
     id: i32,
-    title: String,
-    description: String,
-    owner_id: i32,
+    pub title: String,
+    pub description: String,
+    pub owner_id: i32,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
@@ -38,11 +37,7 @@ pub fn router(state: Arc<AppState>) -> Router {
             return Err(StatusCode::BAD_REQUEST);
         }
 
-        let tx = sqlx::query_as::<_, Article>("SELECT * FROM articles WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&state.pool)
-            .await;
-
+        let tx = state.article_entity.get_by_id(id).await;
         match tx {
             Ok(Some(article)) => Ok(Json(article)),
             Ok(None) => Err(StatusCode::NOT_FOUND),
@@ -60,10 +55,9 @@ pub fn router(state: Arc<AppState>) -> Router {
             return Err(StatusCode::UNAUTHORIZED);
         }
 
-        let tx = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1 AND jwt = $2")
-            .bind(article.owner_id)
-            .bind(token)
-            .fetch_optional(&state.pool)
+        let tx = state
+            .user_entity
+            .get_by_id_and_jwt(article.owner_id, token)
             .await;
 
         let user = match tx {
@@ -72,15 +66,13 @@ pub fn router(state: Arc<AppState>) -> Router {
             Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
         };
 
-        let tx = sqlx::query_as::<_, Article>(
-            "INSERT INTO articles (title, description, owner_id) VALUES ($1, $2, $3) RETURNING *",
-        )
-        .bind(article.title.clone())
-        .bind(article.description.clone())
-        .bind(user.id)
-        .fetch_one(&state.pool)
-        .await;
+        let new_article = NewArticle {
+            title: article.title,
+            description: article.description,
+            owner_id: user.id,
+        };
 
+        let tx = state.article_entity.create(new_article).await;
         match tx {
             Ok(tx) => Ok(Json(tx)),
             Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),

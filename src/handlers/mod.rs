@@ -2,10 +2,12 @@ mod articles;
 mod health;
 mod users;
 
-use crate::AppState;
 use axum::Router;
 use std::sync::Arc;
 
+use crate::AppState;
+
+pub use articles::Article;
 pub use users::User;
 
 pub fn router(pool: Arc<AppState>) -> Router {

@@ -1,19 +1,23 @@
 mod config;
+mod entities;
 mod handlers;
 mod jwt;
 
 use axum::Router;
 use config::Config;
 use jwt::Jwt;
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+use crate::entities::{ArticleEntity, UserEntity};
+
 pub struct AppState {
     jwt: Jwt,
-    pool: PgPool,
+    user_entity: UserEntity,
+    article_entity: ArticleEntity,
 }
 
 #[tokio::main]
@@ -34,9 +38,14 @@ async fn main() {
         .await
         .expect("Failed to connect to database");
 
+    let user_entity = UserEntity::new(pool.clone());
+    let article_entity = ArticleEntity::new(pool.clone());
     let jwt = Jwt::new(config.jwt);
-
-    let state = Arc::new(AppState { jwt, pool });
+    let state = Arc::new(AppState {
+        jwt,
+        user_entity,
+        article_entity,
+    });
 
     let app = Router::new()
         .merge(handlers::router(state))

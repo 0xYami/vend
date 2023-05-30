@@ -1,4 +1,3 @@
-use crate::AppState;
 use axum::{
     extract::{Path, State},
     headers::{authorization::Bearer, Authorization},
@@ -9,6 +8,8 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::sync::Arc;
+
+use crate::{entities::NewUser, AppState};
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct User {
@@ -36,11 +37,7 @@ pub fn router(state: Arc<AppState>) -> Router {
             return Err(StatusCode::BAD_REQUEST);
         }
 
-        let tx = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
-            .bind(id)
-            .fetch_one(&state.pool)
-            .await;
-
+        let tx = state.user_entity.get_by_id(id).await;
         match tx {
             Ok(tx) => Ok(Json(tx)),
             Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
@@ -51,11 +48,7 @@ pub fn router(state: Arc<AppState>) -> Router {
         State(state): State<Arc<AppState>>,
         Json(user): Json<CreateUser>,
     ) -> Result<Json<User>, StatusCode> {
-        let tx = sqlx::query_as::<_, User>("SELECT * FROM users WHERE name = $1")
-            .bind(user.name.clone())
-            .fetch_optional(&state.pool)
-            .await;
-
+        let tx = state.user_entity.get_by_name(user.name.clone()).await;
         match tx {
             Ok(Some(_)) => return Err(StatusCode::BAD_REQUEST),
             Ok(None) => (),
@@ -67,14 +60,12 @@ pub fn router(state: Arc<AppState>) -> Router {
             Ok(token) => token,
         };
 
-        let tx = sqlx::query_as::<_, User>(
-            "INSERT INTO users (name, jwt) VALUES ($1, $2) RETURNING id, name, jwt",
-        )
-        .bind(user.name)
-        .bind(token)
-        .fetch_one(&state.pool)
-        .await;
+        let new_user = NewUser {
+            name: user.name,
+            jwt: token.clone(),
+        };
 
+        let tx = state.user_entity.create(new_user).await;
         match tx {
             Ok(tx) => Ok(Json(tx)),
             Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
@@ -91,31 +82,19 @@ pub fn router(state: Arc<AppState>) -> Router {
             return Err(StatusCode::BAD_REQUEST);
         }
 
-        let token = headers.token();
-        if state.jwt.validate(String::from(token)).is_err() {
+        let token = headers.token().to_string();
+        if state.jwt.validate(token.clone()).is_err() {
             return Err(StatusCode::UNAUTHORIZED);
         }
 
-        let tx = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1 AND jwt = $2")
-            .bind(id)
-            .bind(token)
-            .fetch_optional(&state.pool)
-            .await;
-
+        let tx = state.user_entity.get_by_id_and_jwt(id, token).await;
         match tx {
             Ok(Some(_)) => (),
             Ok(None) => return Err(StatusCode::NOT_FOUND),
             Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
         }
 
-        let tx = sqlx::query_as::<_, User>(
-            "UPDATE users SET name = $1 WHERE id = $2 RETURNING id, name, jwt",
-        )
-        .bind(user.name)
-        .bind(id)
-        .fetch_one(&state.pool)
-        .await;
-
+        let tx = state.user_entity.update(id, user.name).await;
         match tx {
             Ok(tx) => Ok(Json(tx)),
             Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
