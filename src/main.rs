@@ -25,7 +25,7 @@ async fn main() {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "vend=debug,axum::rejection=trace,tower_http=debug".into()),
+                .unwrap_or_else(|_| "ichiba=debug,axum::rejection=trace,tower_http=debug".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
