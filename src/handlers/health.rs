@@ -1,4 +1,3 @@
-use crate::handlers::route;
 use axum::{routing::get, Router};
 
 pub fn router() -> Router {
@@ -6,5 +5,5 @@ pub fn router() -> Router {
         "healthy"
     }
 
-    route("/_health", get(handler))
+    Router::new().route("/_health", get(handler))
 }
