@@ -1,4 +1,5 @@
 use anyhow::Result;
+use axum::http::{HeaderName, HeaderValue, Method};
 use dotenvy::dotenv;
 use std::{
     env,
@@ -16,6 +17,29 @@ impl DBConfig {
         Ok(Self {
             url: env::var("DATABASE_URL")?,
             max_connections: env::var("MAX_CONNECTIONS")?.parse::<u32>()?,
+        })
+    }
+}
+
+pub struct CorsConfig {
+    pub allowed_origin: HeaderValue,
+    pub allowed_methods: Vec<Method>,
+    pub allowed_headers: Vec<HeaderName>,
+}
+
+impl CorsConfig {
+    fn try_from_env() -> Result<Self> {
+        dotenv()?;
+        Ok(Self {
+            allowed_origin: env::var("CORS_ALLOWED_ORIGIN")?.parse::<HeaderValue>()?,
+            allowed_methods: env::var("CORS_ALLOWED_METHODS")?
+                .split(',')
+                .map(|m| m.parse::<Method>().unwrap())
+                .collect(),
+            allowed_headers: env::var("CORS_ALLOWED_HEADERS")?
+                .split(',')
+                .map(|h| h.parse::<HeaderName>().unwrap())
+                .collect(),
         })
     }
 }
@@ -40,6 +64,7 @@ impl JwtConfig {
 pub struct Config {
     pub addr: SocketAddr,
     pub db: DBConfig,
+    pub cors: CorsConfig,
     pub jwt: JwtConfig,
 }
 
@@ -53,6 +78,7 @@ impl Config {
         Ok(Self {
             addr: SocketAddr::from((host, port)),
             db: DBConfig::try_from_env().unwrap(),
+            cors: CorsConfig::try_from_env().unwrap(),
             jwt: JwtConfig::try_from_env().unwrap(),
         })
     }

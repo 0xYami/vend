@@ -7,7 +7,7 @@ use config::Config;
 use jwt::Jwt;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::sync::Arc;
-use tower_http::trace::TraceLayer;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -40,6 +40,12 @@ async fn main() {
 
     let app = Router::new()
         .merge(handlers::router(state))
+        .layer(
+            CorsLayer::new()
+                .allow_origin(config.cors.allowed_origin)
+                .allow_methods(config.cors.allowed_methods)
+                .allow_headers(config.cors.allowed_headers),
+        )
         .layer(TraceLayer::new_for_http());
 
     info!("Server listening on {}", config.addr);
