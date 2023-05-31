@@ -14,6 +14,11 @@ use crate::{
 };
 
 #[derive(Serialize, Deserialize)]
+struct AuthenticateUser {
+    id: i32,
+}
+
+#[derive(Serialize, Deserialize)]
 struct CreateUser {
     name: String,
 }
@@ -24,6 +29,24 @@ struct UpdateUser {
 }
 
 pub fn router(state: Arc<AppState>) -> Router {
+    async fn authenticate(
+        State(state): State<Arc<AppState>>,
+        TypedHeader(headers): TypedHeader<Authorization<Bearer>>,
+        Json(user): Json<AuthenticateUser>,
+    ) -> Result<Json<User>, StatusCode> {
+        let token = headers.token().to_string();
+        if state.jwt.validate(token.clone()).is_err() {
+            return Err(StatusCode::UNAUTHORIZED);
+        }
+
+        let tx = state.user_entity.get_by_id_and_jwt(user.id, token).await;
+        match tx {
+            Ok(Some(tx)) => Ok(Json(tx)),
+            Ok(None) => Err(StatusCode::UNAUTHORIZED),
+            Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        }
+    }
+
     async fn get_user(
         State(state): State<Arc<AppState>>,
         Path(id): Path<i32>,
@@ -99,5 +122,6 @@ pub fn router(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/users/:id", get(get_user).put(update_user))
         .route("/users", post(create_user))
+        .route("/authenticate", post(authenticate))
         .with_state(state)
 }
