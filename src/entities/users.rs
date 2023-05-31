@@ -11,6 +11,7 @@ pub struct User {
     pub id: i32,
     pub name: String,
     pub jwt: String,
+    pub balance: i32,
 }
 
 pub struct NewUser {

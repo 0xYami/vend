@@ -5,20 +5,12 @@ use axum::{
     routing::{get, post},
     Json, Router, TypedHeader,
 };
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 use crate::{
-    entities::{Article, NewArticle},
+    entities::{Article, CreateArticle},
     AppState,
 };
-
-#[derive(Serialize, Deserialize)]
-struct CreateArticle {
-    title: String,
-    description: String,
-    owner_id: i32,
-}
 
 pub fn router(state: Arc<AppState>) -> Router {
     async fn get_article(
@@ -52,19 +44,13 @@ pub fn router(state: Arc<AppState>) -> Router {
             .get_by_id_and_jwt(article.owner_id, token)
             .await;
 
-        let user = match tx {
-            Ok(Some(user)) => user,
+        match tx {
+            Ok(Some(_)) => (),
             Ok(None) => return Err(StatusCode::UNAUTHORIZED),
             Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
-        };
+        }
 
-        let new_article = NewArticle {
-            title: article.title,
-            description: article.description,
-            owner_id: user.id,
-        };
-
-        let tx = state.article_entity.create(new_article).await;
+        let tx = state.article_entity.create(article).await;
         match tx {
             Ok(tx) => Ok(Json(tx)),
             Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
