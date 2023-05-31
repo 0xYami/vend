@@ -1,5 +1,5 @@
 mod articles;
 mod users;
 
-pub use articles::{ArticleEntity, NewArticle};
-pub use users::{NewUser, UserEntity};
+pub use articles::{Article, ArticleEntity, NewArticle};
+pub use users::{NewUser, User, UserEntity};

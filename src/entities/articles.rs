@@ -1,10 +1,20 @@
 use anyhow::Result;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-
-use crate::handlers::Article;
 
 pub struct ArticleEntity {
     pool: PgPool,
+}
+
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
+pub struct Article {
+    id: i32,
+    pub title: String,
+    pub description: String,
+    pub owner_id: i32,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
 }
 
 pub struct NewArticle {

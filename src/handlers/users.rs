@@ -6,17 +6,12 @@ use axum::{
     Json, Router, TypedHeader,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
 use std::sync::Arc;
 
-use crate::{entities::NewUser, AppState};
-
-#[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct User {
-    pub id: i32,
-    pub name: String,
-    pub jwt: String,
-}
+use crate::{
+    entities::{NewUser, User},
+    AppState,
+};
 
 #[derive(Serialize, Deserialize)]
 struct CreateUser {

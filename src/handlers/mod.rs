@@ -7,9 +7,6 @@ use std::sync::Arc;
 
 use crate::AppState;
 
-pub use articles::Article;
-pub use users::User;
-
 pub fn router(pool: Arc<AppState>) -> Router {
     Router::new()
         .merge(health::router())

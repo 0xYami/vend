@@ -1,10 +1,16 @@
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-
-use crate::handlers::User;
 
 pub struct UserEntity {
     pool: PgPool,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct User {
+    pub id: i32,
+    pub name: String,
+    pub jwt: String,
 }
 
 pub struct NewUser {

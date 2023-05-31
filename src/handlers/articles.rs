@@ -1,4 +1,3 @@
-use crate::{entities::NewArticle, AppState};
 use axum::{
     extract::{Path, State},
     headers::{authorization::Bearer, Authorization},
@@ -6,20 +5,13 @@ use axum::{
     routing::{get, post},
     Json, Router, TypedHeader,
 };
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
 use std::sync::Arc;
 
-#[derive(Serialize, Deserialize, FromRow)]
-pub struct Article {
-    id: i32,
-    pub title: String,
-    pub description: String,
-    pub owner_id: i32,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
-}
+use crate::{
+    entities::{Article, NewArticle},
+    AppState,
+};
 
 #[derive(Serialize, Deserialize)]
 struct CreateArticle {
