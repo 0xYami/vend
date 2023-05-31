@@ -50,6 +50,18 @@ pub fn router(state: Arc<AppState>) -> Router {
             Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
         }
 
+        let tx = state.image_entity.get_by_id(article.image_id).await;
+        let image = match tx {
+            Ok(tx) => tx,
+            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+        };
+
+        let tx = state.image_entity.create(image).await;
+        match tx {
+            Ok(_) => (),
+            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+        }
+
         let tx = state.article_entity.create(article).await;
         match tx {
             Ok(tx) => Ok(Json(tx)),

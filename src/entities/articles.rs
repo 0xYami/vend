@@ -11,6 +11,7 @@ pub struct ArticleEntity {
 #[sqlx(type_name = "article_type", rename_all = "snake_case")]
 pub enum ArticleType {
     Cap,
+    Kimono,
     Jacket,
     Hoodie,
     TShirt,
@@ -28,7 +29,7 @@ pub enum ArticleSize {
 }
 
 #[derive(Serialize, Deserialize, sqlx::Type)]
-#[sqlx(type_name = "gender", rename_all = "lowercase")]
+#[sqlx(type_name = "gender", rename_all = "snake_case")]
 pub enum ArticleGender {
     Male,
     Female,
@@ -64,10 +65,10 @@ pub struct CreateArticle {
     pub title: String,
     pub description: String,
     pub owner_id: i32,
+    pub image_id: i32,
     pub size: ArticleSize,
     pub gender: ArticleGender,
     pub price: i32,
-    pub image_url: String,
     pub article_type: ArticleType,
 }
 
@@ -86,7 +87,7 @@ impl ArticleEntity {
 
     pub async fn create(&self, article: CreateArticle) -> Result<Article> {
         let tx = sqlx::query_as::<_, Article>(
-            "INSERT INTO articles (title, description, owner_id, size, gender, price, image_url, article_type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+            "INSERT INTO articles (title, description, owner_id, size, gender, price, article_type) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
         )
         .bind(article.title)
         .bind(article.description)
@@ -94,7 +95,6 @@ impl ArticleEntity {
         .bind(article.size)
         .bind(article.gender)
         .bind(article.price)
-        .bind(article.image_url)
         .bind(article.article_type)
         .fetch_one(&self.pool)
         .await?;
