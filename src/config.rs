@@ -6,6 +6,7 @@ use std::{
     net::{IpAddr, SocketAddr},
 };
 
+#[derive(Clone)]
 pub struct DBConfig {
     pub url: String,
     pub max_connections: u32,
@@ -21,6 +22,7 @@ impl DBConfig {
     }
 }
 
+#[derive(Clone)]
 pub struct CorsConfig {
     pub allowed_origin: HeaderValue,
     pub allowed_methods: Vec<Method>,
@@ -44,6 +46,7 @@ impl CorsConfig {
     }
 }
 
+#[derive(Clone)]
 pub struct JwtConfig {
     /// secret key
     pub secret: String,
@@ -61,11 +64,27 @@ impl JwtConfig {
     }
 }
 
+#[derive(Clone)]
+pub struct S3BucketConfig {
+    pub base_url: String,
+}
+
+impl S3BucketConfig {
+    pub fn try_from_env() -> Result<Self> {
+        dotenv()?;
+        Ok(Self {
+            base_url: env::var("S3_BUCKET_BASE_URL").unwrap(),
+        })
+    }
+}
+
+#[derive(Clone)]
 pub struct Config {
     pub addr: SocketAddr,
     pub db: DBConfig,
     pub cors: CorsConfig,
     pub jwt: JwtConfig,
+    pub s3_bucket: S3BucketConfig,
 }
 
 impl Config {
@@ -80,6 +99,7 @@ impl Config {
             db: DBConfig::try_from_env().unwrap(),
             cors: CorsConfig::try_from_env().unwrap(),
             jwt: JwtConfig::try_from_env().unwrap(),
+            s3_bucket: S3BucketConfig::try_from_env().unwrap(),
         })
     }
 }

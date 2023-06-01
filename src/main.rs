@@ -15,6 +15,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use crate::entities::{ArticleEntity, UserEntity};
 
 pub struct AppState {
+    config: Config,
     jwt: Jwt,
     user_entity: UserEntity,
     article_entity: ArticleEntity,
@@ -40,8 +41,9 @@ async fn main() {
 
     let user_entity = UserEntity::new(pool.clone());
     let article_entity = ArticleEntity::new(pool.clone());
-    let jwt = Jwt::new(config.jwt);
+    let jwt = Jwt::new(config.jwt.clone());
     let state = Arc::new(AppState {
+        config: config.clone(),
         jwt,
         user_entity,
         article_entity,

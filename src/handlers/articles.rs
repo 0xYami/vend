@@ -5,28 +5,69 @@ use axum::{
     routing::{get, post},
     Json, Router, TypedHeader,
 };
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 use crate::{
-    entities::{Article, CreateArticle},
+    entities::{Article, ArticleGender, ArticleSize, ArticleStatus, ArticleType, CreateArticle},
     AppState,
 };
+
+#[derive(Serialize, Deserialize)]
+struct ArticleResponse {
+    id: i32,
+    title: String,
+    description: String,
+    owner_id: i32,
+    image_url: String,
+    size: ArticleSize,
+    gender: ArticleGender,
+    price: i32,
+    status: ArticleStatus,
+    article_type: ArticleType,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
+}
+
+impl ArticleResponse {
+    fn from_article(article: Article, s3_base_url: String) -> Self {
+        Self {
+            id: article.id,
+            title: article.title,
+            description: article.description,
+            owner_id: article.owner_id,
+            image_url: format!("{}/{}.png", s3_base_url, article.image_id),
+            size: article.size,
+            gender: article.gender,
+            price: article.price,
+            status: article.status,
+            article_type: article.article_type,
+            created_at: article.created_at,
+            updated_at: article.updated_at,
+        }
+    }
+}
 
 pub fn router(state: Arc<AppState>) -> Router {
     async fn get_article(
         State(state): State<Arc<AppState>>,
         Path(id): Path<i32>,
-    ) -> Result<Json<Article>, StatusCode> {
+    ) -> Result<Json<ArticleResponse>, StatusCode> {
         if id < 0 {
             return Err(StatusCode::BAD_REQUEST);
         }
 
         let tx = state.article_entity.get_by_id(id).await;
-        match tx {
-            Ok(Some(article)) => Ok(Json(article)),
-            Ok(None) => Err(StatusCode::NOT_FOUND),
-            Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-        }
+        let article = match tx {
+            Ok(Some(article)) => article,
+            Ok(None) => return Err(StatusCode::NOT_FOUND),
+            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+        };
+
+        let img_base_url = state.config.s3_bucket.base_url.clone();
+        let response = ArticleResponse::from_article(article, img_base_url);
+        Ok(Json(response))
     }
 
     async fn create_article(

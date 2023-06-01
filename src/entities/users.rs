@@ -53,13 +53,12 @@ impl UserEntity {
     }
 
     pub async fn create(&self, user: NewUser) -> Result<User> {
-        let tx = sqlx::query_as::<_, User>(
-            "INSERT INTO users (name, jwt) VALUES ($1, $2) RETURNING id, name, jwt, balance",
-        )
-        .bind(user.name)
-        .bind(user.jwt)
-        .fetch_one(&self.pool)
-        .await?;
+        let tx =
+            sqlx::query_as::<_, User>("INSERT INTO users (name, jwt) VALUES ($1, $2) RETURNING *")
+                .bind(user.name)
+                .bind(user.jwt)
+                .fetch_one(&self.pool)
+                .await?;
         Ok(tx)
     }
 
