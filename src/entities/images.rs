@@ -29,7 +29,7 @@ impl ImageEntity {
 
     pub async fn create(&self, image: Image) -> Result<Image> {
         let tx = sqlx::query_as::<_, Image>(
-            "INSERT INTO images (article_id, filename, data) VALUES ($1, $2, $3) RETURNING id, filename, mime_type, data",
+            "INSERT INTO images (article_id, filename, data) VALUES ($1, $2, $3) RETURNING *",
         )
         .bind(image.article_id)
         .bind(image.filename)

@@ -51,7 +51,7 @@ impl UserEntity {
 
     pub async fn create(&self, user: NewUser) -> Result<User> {
         let tx = sqlx::query_as::<_, User>(
-            "INSERT INTO users (name, jwt) VALUES ($1, $2) RETURNING id, name, jwt",
+            "INSERT INTO users (name, jwt) VALUES ($1, $2) RETURNING id, name, jwt, balance",
         )
         .bind(user.name)
         .bind(user.jwt)
@@ -62,7 +62,7 @@ impl UserEntity {
 
     pub async fn update(&self, id: i32, name: String) -> Result<User> {
         let tx = sqlx::query_as::<_, User>(
-            "UPDATE users SET name = $1 WHERE id = $2 RETURNING id, name, jwt",
+            "UPDATE users SET name = $1 WHERE id = $2 RETURNING id, name, jwt, balance",
         )
         .bind(name)
         .bind(id)
