@@ -49,13 +49,12 @@ pub struct Article {
     title: String,
     description: String,
     owner_id: i32,
+    image_id: String,
     size: ArticleSize,
     gender: ArticleGender,
     price: i32,
-    image_url: String,
-    article_type: ArticleType,
     status: ArticleStatus,
-    views: i32,
+    article_type: ArticleType,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
@@ -65,10 +64,11 @@ pub struct CreateArticle {
     pub title: String,
     pub description: String,
     pub owner_id: i32,
-    pub image_id: i32,
+    pub image_id: String,
     pub size: ArticleSize,
     pub gender: ArticleGender,
     pub price: i32,
+    pub status: ArticleStatus,
     pub article_type: ArticleType,
 }
 
@@ -87,14 +87,16 @@ impl ArticleEntity {
 
     pub async fn create(&self, article: CreateArticle) -> Result<Article> {
         let tx = sqlx::query_as::<_, Article>(
-            "INSERT INTO articles (title, description, owner_id, size, gender, price, article_type) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+            "INSERT INTO articles (title, description, owner_id, image_id, size, gender, price, status, article_type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *",
         )
         .bind(article.title)
         .bind(article.description)
         .bind(article.owner_id)
+        .bind(article.image_id)
         .bind(article.size)
         .bind(article.gender)
         .bind(article.price)
+        .bind(article.status)
         .bind(article.article_type)
         .fetch_one(&self.pool)
         .await?;

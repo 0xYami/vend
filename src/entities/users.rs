@@ -1,4 +1,5 @@
 use anyhow::Result;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
@@ -12,6 +13,8 @@ pub struct User {
     pub name: String,
     pub jwt: String,
     pub balance: i32,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 pub struct NewUser {

@@ -12,13 +12,12 @@ use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::entities::{ArticleEntity, ImageEntity, UserEntity};
+use crate::entities::{ArticleEntity, UserEntity};
 
 pub struct AppState {
     jwt: Jwt,
     user_entity: UserEntity,
     article_entity: ArticleEntity,
-    image_entity: ImageEntity,
 }
 
 #[tokio::main]
@@ -41,13 +40,11 @@ async fn main() {
 
     let user_entity = UserEntity::new(pool.clone());
     let article_entity = ArticleEntity::new(pool.clone());
-    let image_entity = ImageEntity::new(pool.clone());
     let jwt = Jwt::new(config.jwt);
     let state = Arc::new(AppState {
         jwt,
         user_entity,
         article_entity,
-        image_entity,
     });
 
     let app = Router::new()
