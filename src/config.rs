@@ -65,26 +65,11 @@ impl JwtConfig {
 }
 
 #[derive(Clone)]
-pub struct S3BucketConfig {
-    pub base_url: String,
-}
-
-impl S3BucketConfig {
-    pub fn try_from_env() -> Result<Self> {
-        dotenv()?;
-        Ok(Self {
-            base_url: env::var("S3_BUCKET_BASE_URL").unwrap(),
-        })
-    }
-}
-
-#[derive(Clone)]
 pub struct Config {
     pub addr: SocketAddr,
     pub db: DBConfig,
     pub cors: CorsConfig,
     pub jwt: JwtConfig,
-    pub s3_bucket: S3BucketConfig,
 }
 
 impl Config {
@@ -99,7 +84,6 @@ impl Config {
             db: DBConfig::try_from_env().unwrap(),
             cors: CorsConfig::try_from_env().unwrap(),
             jwt: JwtConfig::try_from_env().unwrap(),
-            s3_bucket: S3BucketConfig::try_from_env().unwrap(),
         })
     }
 }

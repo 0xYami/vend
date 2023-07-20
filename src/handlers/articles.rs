@@ -31,13 +31,13 @@ struct ArticleResponse {
 }
 
 impl ArticleResponse {
-    fn from_article(article: Article, s3_base_url: String) -> Self {
+    fn from_article(article: Article) -> Self {
         Self {
             id: article.id,
             title: article.title,
             description: article.description,
             owner_id: article.owner_id,
-            image_url: format!("{}/{}.png", s3_base_url, article.image_id),
+            image_url: article.image_url,
             size: article.size,
             gender: article.gender,
             price: article.price,
@@ -65,8 +65,7 @@ pub fn router(state: Arc<AppState>) -> Router {
             Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
         };
 
-        let img_base_url = state.config.s3_bucket.base_url.clone();
-        let response = ArticleResponse::from_article(article, img_base_url);
+        let response = ArticleResponse::from_article(article);
         Ok(Json(response))
     }
 
